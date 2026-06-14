@@ -1,0 +1,27 @@
+#!/bin/sh
+set -e
+
+PREREQ=""
+prereqs() { echo "$PREREQ"; }
+
+case "${1:-}" in
+    prereqs)
+        prereqs
+        exit 0
+        ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+aml=/usr/local/lib/lenovo-14w-trackpad-fix/acpi/lenovo-14w-gen2-trackpad.aml
+workdir=$(mktemp -d)
+archive=$(mktemp)
+trap 'rm -rf "$workdir" "$archive"' EXIT
+
+mkdir -p "$workdir/kernel/firmware/acpi"
+cp "$aml" "$workdir/kernel/firmware/acpi/"
+(
+    cd "$workdir"
+    find kernel -print0 | cpio --null -o -H newc --quiet > "$archive"
+)
+prepend_earlyinitramfs "$archive"

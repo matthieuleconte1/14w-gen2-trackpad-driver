@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+build() {
+    add_file_early \
+        /usr/local/lib/lenovo-14w-trackpad-fix/acpi/lenovo-14w-gen2-trackpad.aml \
+        /kernel/firmware/acpi/lenovo-14w-gen2-trackpad.aml \
+        0644
+}
+
+help() {
+    cat <<EOF
+Adds the Lenovo 14w Gen 2 ELAN0643 ACPI trackpad override to the early CPIO.
+EOF
+}
