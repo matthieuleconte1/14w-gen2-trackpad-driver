@@ -1,96 +1,74 @@
-# Correctif trackpad Lenovo 14w Gen 2 sous Linux
+# Lenovo 14w Gen 2 Touchpad Fix for Linux
 
-Ce paquet corrige le trackpad `ELAN0643` du Lenovo 14w Gen 2, type machine
-`82N9`. Le firmware annonce le périphérique, mais sa méthode ACPI dynamique
-`_CRS` ne fournit pas les ressources I2C sous Linux. Le pilote standard
-`i2c_hid_acpi` ne peut donc pas s'y attacher.
+Enables the `ELAN0643` touchpad on the Lenovo 14w Gen 2 (`82N9`).
 
-Il ne s'agit pas d'un pilote propriétaire. Le fichier SSDT fournit au noyau
-les ressources correctes déjà présentes dans la DSDT Lenovo :
+## Supported distributions
 
-- contrôleur : `\\_SB.I2CD`
-- adresse I2C : `0x15`
-- vitesse : 400 kHz
-- interruption : `\\_SB.GPIO`, broche `0x09`, active bas
-- registre du descripteur HID : `0x01`
+- Fedora and openSUSE (`dracut`)
+- Debian, Ubuntu and Linux Mint (`initramfs-tools`)
+- Arch Linux, Manjaro and EndeavourOS (`mkinitcpio`)
 
-## Distributions prises en charge
+## Install
 
-- Fedora, openSUSE et autres systèmes utilisant `dracut`
-- Debian, Ubuntu, Mint et dérivées utilisant `initramfs-tools`
-- Arch Linux, EndeavourOS, Manjaro et dérivées utilisant `mkinitcpio`
-
-L'installateur détecte automatiquement le générateur d'initramfs. Il installe
-un hook permanent : le correctif est donc réintégré lors des futures mises à
-jour du noyau. Les UKI générées par les outils natifs sont également
-reconstruites par ces outils.
-
-## Installation
-
-Copier l'archive sur l'autre distribution, puis lancer :
+Open a terminal and run:
 
 ```bash
-tar -xzf lenovo-14w-trackpad-fix-1.0.0.tar.gz
-cd lenovo-14w-trackpad-fix-1.0.0
+git clone https://github.com/matthieuleconte1/14w-gen2-trackpad-driver.git
+cd 14w-gen2-trackpad-driver
 sudo ./install.sh
 sudo reboot
 ```
 
-L'intégrité de l'archive peut être vérifiée avec :
+The installer automatically detects your distribution.
+
+### Without Git
+
+1. Click **Code**, then **Download ZIP**.
+2. Extract the ZIP file.
+3. Open a terminal inside the extracted folder.
+4. Run:
 
 ```bash
-sha256sum -c lenovo-14w-trackpad-fix-1.0.0.tar.gz.sha256
+sudo ./install.sh
+sudo reboot
 ```
 
-Après redémarrage :
+## Verify
+
+After rebooting, open a terminal in the project folder and run:
 
 ```bash
 ./status.sh
 ```
 
-Une détection manuelle reste possible :
+The output should contain `ELAN0643` and `Touchpad`.
 
-```bash
-sudo ./install.sh --backend dracut
-sudo ./install.sh --backend initramfs-tools
-sudo ./install.sh --backend mkinitcpio
-```
+## Uninstall
 
-## Désinstallation
+Open a terminal in the project folder and run:
 
 ```bash
 sudo ./uninstall.sh
 sudo reboot
 ```
 
-## Recompiler le SSDT
+## Compatibility check
 
-Le fichier AML précompilé est inclus, donc `iasl` n'est pas requis pour
-l'installation. Pour le reconstruire depuis la source :
+The installer only runs when both conditions are detected:
 
-```bash
-./build.sh
-```
+- Lenovo machine type `82N9`
+- ACPI device `ELAN0643`
 
-Paquets contenant `iasl` : `acpica-tools` sur Fedora/Debian/Ubuntu et `acpica`
-sur Arch Linux.
+Do not force this fix onto another computer model.
 
-## Créer une archive à distribuer
+## How it works
 
-```bash
-./make-release.sh
-```
+The Lenovo firmware does not provide valid I2C resources for the touchpad to
+Linux. This project loads a small SSDT correction from the initramfs, allowing
+the standard Linux `i2c_hid_acpi` and `hid-multitouch` drivers to detect it.
 
-Cette commande crée l'archive `.tar.gz` et son fichier de contrôle `.sha256`
-dans le dossier parent.
+No custom kernel driver is installed.
 
-## Sécurité
+## License
 
-L'installation refuse de s'exécuter si le DMI n'indique pas `LENOVO 82N9` ou
-si le périphérique ACPI `ELAN0643` est absent. Le noyau doit avoir
-`CONFIG_ACPI_TABLE_UPGRADE=y`, ce qui est le cas des noyaux génériques usuels.
-
-Le chargement des tables ACPI depuis l'initramfs est documenté par le noyau
-Linux :
-
-https://docs.kernel.org/admin-guide/acpi/initrd_table_override.html
+[MIT](LICENSE)
